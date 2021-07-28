@@ -24,7 +24,7 @@ class Topic extends CI_Controller {
         $this->load->view('footer'); 
     }
 
-    // 등록 (유효성 체크)
+    // 등록 (유효성 검사)
     function add(){
     	$this->_head();
 
