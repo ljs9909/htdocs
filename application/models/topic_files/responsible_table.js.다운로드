@@ -1,0 +1,3 @@
+(function(jQuery) {
+  return $('#content > table').wrap('<div class="scroll-container"/>');
+})($);

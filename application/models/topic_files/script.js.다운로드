@@ -1,0 +1,510 @@
+var Panel;
+
+(function($) {
+  var menus, page, page_handler, reset, sidebar;
+  $('div.curtain').on('touchmove', function() {
+    return false;
+  });
+  menus = $('#main_menu');
+  sidebar = $('aside');
+  page = $('#my_page');
+  reset = function() {
+    var left, right, width;
+    width = $('body').width();
+    if (sidebar.size()) {
+      left = menus.css('left') === 0 || menus.css('left') === '0px' ? 0 : -(width - 45);
+      menus.css({
+        'left': left + 'px',
+        'width': width - 45 + 'px'
+      });
+      left = sidebar.css('left') === 0 || sidebar.css('left') === '0px' ? 0 : -(width - 30);
+      sidebar.css({
+        'left': left + 'px',
+        'width': width - 30 + 'px'
+      });
+    } else {
+      left = menus.css('left') === 0 || menus.css('left') === '0px' ? 0 : -(width - 30);
+      menus.css({
+        'left': left + 'px',
+        'width': width - 30 + 'px'
+      });
+    }
+    menus.find('div.wrapper').width(menus.width() - 10);
+    right = page.css('right') === 0 || page.css('right') === '0px' ? 0 : -(width - 30);
+    return page.css({
+      'right': right + 'px',
+      'width': width - 30 + 'px'
+    });
+  };
+  page_handler = function() {
+    return $('#content img').each(function() {
+      var oh, ow, r, ww;
+      if (!$(this).attr('width')) {
+        $(this).attr('width', $(this).width());
+      }
+      if (!$(this).attr('height')) {
+        $(this).attr('height', $(this).height());
+      }
+      ow = $(this).attr('width');
+      oh = $(this).attr('height');
+      if (ow && oh) {
+        r = oh / ow;
+        ww = $('body').width() - 30;
+        if (ow > ww) {
+          return $(this).css({
+            'width': ww,
+            'height': ww * r
+          });
+        } else {
+          return $(this).css({
+            'width': ow,
+            'height': oh
+          });
+        }
+      }
+    });
+  };
+  $(window).on('orientationchange', function() {
+    return reset();
+  });
+  $(window).resize(function() {
+    return page_handler();
+  });
+  $(window).trigger('resize');
+  return reset();
+})(jQuery);
+
+Panel = (function() {
+  class Panel {
+    constructor(node1, dom) {
+      this.node = node1;
+      this.dom = dom;
+      this.curtain = new Curtain(this.dom);
+      this.curtain.curtain.on('click', () => {
+        return this.hide();
+      });
+    }
+
+    show() {
+      $('body').css('overflow', 'hidden');
+      this.curtain.show();
+      this.dom.show();
+      return this.dom.animate({
+        left: 0
+      }, {
+        doration: 150,
+        specialEasing: {
+          width: "easeOut"
+        },
+        step: (now, fx) => {
+          return this.dom.css('left', now);
+        }
+      });
+    }
+
+    hide() {
+      $('body').css('overflow', 'visible');
+      return this.dom.animate({
+        left: -(this.dom.width()) - 6 // pin의 width
+      }, {
+        duration: 150,
+        specialEasing: {
+          width: 'easeOut'
+        },
+        step: (now, fx) => {
+          return this.dom.css('left', now);
+        },
+        complete: () => {
+          this.curtain.hide();
+          return this.dom.hide();
+        }
+      });
+    }
+
+    getSelector() {
+      return this.selector;
+    }
+
+  };
+
+  Panel.prototype.node = void 0;
+
+  Panel.prototype.dom = void 0;
+
+  Panel.prototype.curtain = void 0;
+
+  Panel.prototype.selector = void 0;
+
+  return Panel;
+
+}).call(this);
+
+// 메인 메뉴 패널 보기/숨기기
+(function($) {
+  var menus, panel;
+  menus = $('#main_menu');
+  panel = new Panel($('btn_menus'), menus);
+  return $('.btn_menus').on('click', function() {
+    panel.show();
+    return false;
+  });
+})(jQuery);
+
+// 메인 메뉴 액션
+(function($) {
+  var menus;
+  menus = $('#main_menu > div.wrapper > ul > li.parent > div.label > span.empty');
+  return menus.on('click', function() {
+    var node, submenu;
+    node = $(this).parents('li');
+    submenu = node.find(' > div.sub_nav');
+    if (submenu.size() > 0) {
+      if (submenu.is(':visible')) {
+        $('span', this).animate({
+          'deg': 0
+        }, {
+          duration: 200,
+          step: function(now, fx) {
+            return $(this).css('transform', 'rotate(' + now + 'deg)', 100);
+          }
+        });
+        submenu.hide();
+      } else {
+        $('span', this).animate({
+          'deg': 90
+        }, {
+          duration: 200,
+          step: function(now, fx) {
+            return $(this).css('transform', 'rotate(' + now + 'deg)', 100);
+          }
+        });
+        submenu.show();
+      }
+    }
+    return false;
+  });
+})(jQuery);
+
+// 토픽 리스트 패널 보기/숨기기
+(function($) {
+  var panel, sidebar;
+  sidebar = $('#aside');
+  panel = new Panel($('.btn_sidebar'), sidebar);
+  $('.btn_sidebar').on('click', function() {
+    panel.show();
+    return false;
+  });
+  if ($('body.top aside').size() > 0) {
+    $('.btn_sidebar').trigger('click');
+  }
+  $('a.btn_cover').on('click', function() {
+    var url1, url2;
+    url1 = $(this).attr('href');
+    url2 = location.origin + location.pathname;
+    if (url1 === url2) {
+      panel.hide();
+      return false;
+    }
+  });
+  $(window).on('resize', function() {
+    return $('#aside').height($(window).height());
+  });
+  return $(window).trigger('resize');
+})(jQuery);
+
+// 마이 페이지 패널 보기/숨기기
+(function($) {
+  var callData, groups, loaded, nests, page, page_curtain, titles;
+  page = $('#my_page');
+  page_curtain = $('#my_page_curtain');
+  groups = $('li.subnode div.group', groups);
+  titles = $('h3', groups);
+  nests = $('div.nested', groups);
+  loaded = false;
+  // Scollbox의 height값 생성
+  $('#my_page_caller').on('click', function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if ($('body').hasClass('logged_out')) {
+      return location.href = base_url + 'auth?mode=login&returnURL=' + encodeURI(location.href);
+    } else {
+      page_curtain.show();
+      $('body').css('overflow', 'hidden');
+      if ($(nests[0]).html() === "") {
+        callData();
+      }
+      return page.show().animate({
+        right: 0
+      }, {
+        doration: 150,
+        specialEasing: {
+          width: "easeOut"
+        }
+      });
+    }
+  });
+  page_curtain.on('click touchstart', function() {
+    $('body').css('overflow', 'visible');
+    return page.animate({
+      right: -(page.width())
+    }, {
+      duration: 150,
+      specialEasing: {
+        width: 'easeOut'
+      },
+      complete: function() {
+        page.hide();
+        return page_curtain.hide();
+      }
+    });
+  });
+  titles.on('click', function(event) {
+    var group;
+    group = $(this).parent();
+    if (group.hasClass('opened')) {
+      return group.removeClass('opened').addClass('closed');
+    } else {
+      return group.removeClass('closed').addClass('opened');
+    }
+  });
+  return callData = function() {
+    // activity
+    $.getJSON(base_url + "personal/consume_ajax", function(response) {
+      var count, d, i, j, k, ref, ref1, str, url;
+      if (response.result) {
+        str = '';
+        count = 0;
+        if (response.data.everystudy_list.length > 0) {
+          str = '<table></tbody>';
+          for (i = j = 0, ref = response.data.everystudy_list.length - 1; (0 <= ref ? j <= ref : j >= ref); i = 0 <= ref ? ++j : --j) {
+            d = response.data.everystudy_list[i];
+            count += Number(d.completed);
+            d.percentage = d.total === '0' ? 0 : Math.min(Math.round(d.completed / d.total * 100), 100);
+            url = d.course_id === '0' ? `${base_url}module/${d.module_id}` : `${base_url}course/${d.course_id}`;
+            str += '<tr>';
+            str += '	<td class="title"><a href="' + url + '">' + htmlspecialchars(d.title) + '</a></td>';
+            str += '	<td class="percentage' + (d.percentage >= 90 ? ' almost' : '') + '"><span class="percentage">' + d.percentage + '%</span></td>';
+            str += '</tr>';
+          }
+          str += '</tbody></table>';
+        } else {
+          str = '<div class="empty"><p>참여하고 있는 공동공부가 없습니다.</p><a href="' + base_url + 'module/180/2236" target="_blank">공동공부란?</a></div>';
+        }
+        $(groups[2]).addClass('closed');
+        $(nests[2]).html(str);
+        str = '';
+        if (count > 0) {
+          $('#activity_submenu th.marking span.subtitle span.count').text(count);
+          str = '<table><tbody>';
+          for (i = k = 0, ref1 = response.data.marking_list.length - 1; (0 <= ref1 ? k <= ref1 : k >= ref1); i = 0 <= ref1 ? ++k : --k) {
+            d = response.data.marking_list[i];
+            url = d.course_id === '0' ? `${base_url}module/${d.module_id}` : `${base_url}course/${d.course_id}`;
+            str += '<tr><td><a href="' + url + '">' + htmlspecialchars(d.title) + '</a></td></tr>';
+          }
+          str += '</tbody></table>';
+        } else {
+          str = '<div class="empty"><p><strong>봤어요</strong>를 하지 않으셨습니다.</p><a href="' + base_url + 'module/180/2361" target="_blank">봤어요란?</a></div>';
+        }
+        $(groups[3]).addClass('closed');
+        return $(nests[3]).html(str);
+      } else if ((response.errorCode != null) === 1) {
+        return location.href = base_url + 'auth?returnURL=' + encodeURI(location.href);
+      } else {
+        submenu.hide();
+        return alert(response.msg);
+      }
+    });
+    // my_content
+    return $.getJSON(base_url + "personal/produce_ajax", function(response) {
+      var d, i, j, k, l, ref, ref1, ref2, str;
+      if (response.result) {
+        str = '';
+        if (response.data.course_list.length > 0) {
+          str = '<ul>';
+          for (i = j = 0, ref = response.data.course_list.length - 1; (0 <= ref ? j <= ref : j >= ref); i = 0 <= ref ? ++j : --j) {
+            d = response.data.course_list[i];
+            str += '<li class="title"><a href="' + base_url + 'course/' + d['id'] + '">' + htmlspecialchars(d['title']) + '</a></li>';
+          }
+          str += '</ul>';
+        } else {
+          str = '<div class="empty"><p>소유중인 코스가 없습니다.</p></div>';
+        }
+        $(groups[0]).addClass('closed');
+        $(nests[0]).html(str);
+        str = '';
+        if (response.data.module_list.length > 0) {
+          str = '<table><thead><tr><th>소유중인 모듈</th></tr></thead><tbody>';
+          for (i = k = 0, ref1 = response.data.module_list.length - 1; (0 <= ref1 ? k <= ref1 : k >= ref1); i = 0 <= ref1 ? ++k : --k) {
+            d = response.data.module_list[i];
+            str += '<tr><td><a href="' + base_url + 'module/' + d['id'] + '">' + htmlspecialchars(d['title']) + '</a></td></tr>';
+          }
+          str += '</tbody></table>';
+        } else {
+          str = '<div class="empty"><p>소유중인 모듈이 없습니다.</p><a href="' + base_url + 'module/180/2360" target="_blank">컨텐츠를 만드는 법</a></div>';
+        }
+        $(nests[1]).html(str);
+        str = '';
+        if (response.data.contribute_list.length > 0) {
+          str = '<table><thead><tr><th>참여중인 모듈</th></tr></thead><tbody>';
+          for (i = l = 0, ref2 = response.data.contribute_list.length - 1; (0 <= ref2 ? l <= ref2 : l >= ref2); i = 0 <= ref2 ? ++l : --l) {
+            d = response.data.contribute_list[i];
+            str += '<tr><td><a href="' + base_url + 'module/' + d['id'] + '">' + htmlspecialchars(d['title']) + '</a></td></tr>';
+          }
+          str += '</tbody></table>';
+        } else {
+          str = '<div class="empty"><p>참여중인 모듈이 없습니다.</p><a href="' + base_url + 'module/180/2360" target="_blank">컨텐츠를 만드는 법</a></div>';
+        }
+        $(groups[1]).addClass('closed');
+        return $(nests[1]).append(str);
+      } else if ((response.errorCode != null) === 1) {
+        return location.href = base_url + 'auth?returnURL=' + encodeURI(location.href);
+      } else {
+        submenu.hide();
+        return alert(response.msg);
+      }
+    });
+  };
+})(jQuery);
+
+// 알림 목록 출력하기
+(function($) {
+  var Notifier, already, curtain, layer, notifier, notify_category;
+  layer = $('#notifier_layer');
+  curtain = new Curtain('#notifier_layer');
+  curtain.transparent();
+  already = false;
+  Notifier = (function() {
+    class Notifier {
+      constructor(node1, dom) {
+        this.node = node1;
+        this.dom = dom;
+      }
+
+      show() {
+        var center, left, offset;
+        offset = this.node.offset();
+        center = offset.left + this.node.width() / 2;
+        left = center - this.dom.width() / 2;
+        this.dom.css('left', left + 'px');
+        this.dom.show();
+        return curtain.show();
+      }
+
+      hide() {
+        this.dom.hide();
+        this.dom.find('li').addClass('read');
+        this.dom.find('li').removeClass('has_new');
+        return curtain.hide();
+      }
+
+      isVisible() {
+        return this.dom.is(':visible');
+      }
+
+      getSelector() {
+        return this.selector;
+      }
+
+    };
+
+    Notifier.prototype.node = void 0;
+
+    Notifier.prototype.dom = void 0;
+
+    Notifier.prototype.selector = void 0;
+
+    return Notifier;
+
+  }).call(this);
+  notifier = new Notifier($('#notifier_caller'), layer);
+  notify_category = getCookie('notify_category');
+  if (notify_category) {
+    $('#notifier_caller').data('type', notify_category);
+  }
+  $('#notifier_caller, .notify_cate').on('click', function(event) {
+    var btn, count, indicator, ntype, point;
+    event.preventDefault();
+    event.stopPropagation();
+    if ($(event.currentTarget).data('visible_toggle') && notifier.isVisible()) {
+      notifier.hide();
+    } else {
+
+    }
+    notifier.show();
+    btn = $(this);
+    $('span.count', btn).hide();
+    //#if already is false
+    indicator = new ProcessIndicator(layer);
+    indicator.start();
+    point = $('ul', layer);
+    count = $('#notifier_caller > span.count').text();
+    $('.notify_cate').removeClass('selected');
+    ntype = $(event.currentTarget).data('type');
+    $('[data-type="' + ntype + '"].notify_cate').addClass('selected');
+    $('#notifier_caller').data('type', ntype);
+    document.cookie = "notify_category=" + ntype + "; expires=Thu, 18 Dec 3000 12:00:00 UTC; path=/";
+    return $.post(base_url + 'notifier/get_ajax/' + ntype, {
+      'scale': 40
+    }, (response) => {
+      var index, item, items, j, len, ref;
+      if (response.result && response.data.list.length > 0) {
+        items = '';
+        ref = response.data.list;
+        for (index = j = 0, len = ref.length; j < len; index = ++j) {
+          item = ref[index];
+          items += '<li class="' + item.type + (item.read ? ' read' : '') + (count > index ? ' has_new' : '') + '" data-link="' + item.path + '"><img class="user_pict" src="' + item.user_pict + '" alt=""><p>' + item.text.replace(/<a\s+.+?>/g, '<a>') + '</p><time datetime="' + item.datetime.original + '">' + item.datetime.relative + '</time></li>';
+        }
+        point.html(items);
+        point.find('a').on('click', function() {
+          return false;
+        });
+      } else {
+        point.html('<li class="empty"><p>알림이 없습니다.</p></li>');
+      }
+      indicator.stop();
+      btn.removeClass('has_new');
+      already = true;
+      return $('span.count', this).text(0);
+    }, 'json');
+  });
+  curtain.curtain.on('click tap', function(event) {
+    event.stopPropagation();
+    event.preventDefault();
+    return notifier.hide();
+  });
+  $(document).on('click tap', '#notifier_layer .btn_close.cancel', function(event) {
+    return notifier.hide();
+  });
+  return $(document).on('click tap', layer.selector + ' li', function(event) {
+    var url;
+    event.stopPropagation();
+    event.preventDefault();
+    url = $(this).data('link');
+    return location.href = url;
+  });
+})(jQuery);
+
+(function($) {
+  $(window).on('resize orientationchange', function() {
+    return $('div#content iframe').each(function() {
+      var ch, cw, h, iframe, w;
+      iframe = $(this);
+      w = iframe.attr('width');
+      h = iframe.attr('height');
+      cw = $('#content').width();
+      ch = Math.floor(h * cw / w);
+      iframe.width(cw);
+      return iframe.height(ch);
+    });
+  });
+  $(window).trigger('orientationchange');
+  return $(document).on('click', 'img.profile_icon', (event) => {
+    var id, img;
+    event.preventDefault();
+    img = $(event.target);
+    id = img.data('id');
+    if (id !== '0' && id > 0) {
+      return window.location.href = `${base_url}/profile/${id}`;
+    }
+  });
+})(jQuery);
